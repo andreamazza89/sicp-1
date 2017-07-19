@@ -15,6 +15,11 @@
       (lambda (x)
         (f ((n f) x)))))
 
+(define (add n1 n2)
+  (lambda (f)
+    (lambda (x)
+      ((n1 f) ((n2 f) x)))))
+
 ;using substitution to try figure out (add-1 zero)
 
 ;(add-1 zero)
