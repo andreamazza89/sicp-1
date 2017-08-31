@@ -58,7 +58,7 @@
 					(r-branch (right-branch tree)))
 			(cond
 				((element-of-set? sym (symbols l-branch)) (cons 0 (encode-symbol sym l-branch)))
-				((element-of-set? sym (symbols r-branch)) (cons 1 (encode-symbol sym r-branch)))))))
+				(else (cons 1 (encode-symbol sym r-branch)))))))
 
 (define (encode message tree)
   (if (null? message)

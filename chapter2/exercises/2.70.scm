@@ -58,7 +58,7 @@
 					(r-branch (right-branch tree)))
 			(cond
 				((element-of-set? sym (symbols l-branch)) (cons 0 (encode-symbol sym l-branch)))
-				((element-of-set? sym (symbols r-branch)) (cons 1 (encode-symbol sym r-branch)))))))
+				(else (cons 1 (encode-symbol sym r-branch)))))))
 
 (define (encode message tree)
   (if (null? message)
@@ -88,4 +88,12 @@
 (define (generate-huffman-tree pairs)
   (successive-merge (make-leaf-set pairs)))
 
-(generate-huffman-tree '((A 8) (B 3) (C 1) (D 1) (E 1) (F 1) (G 1) (H 1)))
+(define my-tree
+  (generate-huffman-tree '((A 2) (BOOM 1) (GET 2) (JOB 2) (NA 16) (SHA 3) (YIP 9) (WAH 1))))
+
+(define message '(Get a job Sha na na na na na na na na Get a job Sha na na na na na na na na Wah yip yip yip yip yip yip yip yip yip Sha boom))
+
+(length (encode message my-tree)) ;84
+;using a fixed-length code, we would need 3 bits per symbol as there are 8 of them, so in total that would be
+
+(* 3 (length message)) ;108
