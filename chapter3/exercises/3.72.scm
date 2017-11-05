@@ -1,6 +1,5 @@
 (define (integers-starting-from n)
   (cons-stream n (integers-starting-from (+ n 1))))
-
 (define integers (integers-starting-from 1))
 
 (define (merge-weighted s1 s2 weight)
@@ -25,21 +24,23 @@
     (weighted-pairs (stream-cdr s) (stream-cdr t) weight)
     weight)))
 
-(define (cubic-weight pair)
+(define (square-weight pair)
   (let ((i (car pair)) (j (cadr pair)))
-    (+ (* i i i) (* j j j))))
+    (+ (square i) (square j))))
 
-(define cube-ordered (weighted-pairs integers integers cubic-weight))
+(define square-ordered (weighted-pairs integers integers square-weight))
 
 (define (stream-walk stream)
-  (cond ((stream-null? stream) '())
-        ((= (cubic-weight (stream-car stream)) (cubic-weight (stream-car (stream-cdr stream))))
-         (cons-stream
-           (list (stream-car stream) (stream-car (stream-cdr stream)))
-           (stream-walk (stream-cdr (stream-cdr stream)))))
-        (else (stream-walk (stream-cdr stream)))))
+  (let ((first (stream-car stream))
+        (second (stream-car (stream-cdr stream)))
+        (third (stream-car (stream-cdr (stream-cdr stream)))))
+    (cond ((= (square-weight first) (square-weight second) (square-weight third))
+           (cons-stream
+             (list first second third)
+             (stream-walk (stream-cdr (stream-cdr (stream-cdr stream))))))
+          (else (stream-walk (stream-cdr stream))))))
 
-(define ramanujans (stream-walk cube-ordered))
+(define squareysquares (stream-walk square-ordered))
 
 (define (show-stream-until-nth stream n)
   (define (loop current)
@@ -51,4 +52,4 @@
             (loop (+ current 1)))))
   (loop 0))
 
-(show-stream-until-nth ramanujans 12)
+(show-stream-until-nth squareysquares 12)
