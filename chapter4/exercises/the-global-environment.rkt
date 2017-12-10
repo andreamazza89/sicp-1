@@ -37,8 +37,8 @@
 
 (define the-global-environment
   (extend-environment
-    (list '+)
-    (list (list 'primitive +))
+    (list '+ '*)
+    (list (list 'primitive +) (list 'primitive *))
     the-empty-environment))
 
 (provide extend-environment)

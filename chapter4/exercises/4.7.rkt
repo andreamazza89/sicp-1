@@ -44,15 +44,15 @@
 
 ;;;;;;;;;;;; table of evaluators below ;;;;;;;;;;
 
+(define (eval-let let-exp env)
+  (my-eval (let->combination let-exp) env))
+
 (define (let->combination let-exp)
   (cons
       (make-lambda
         (let-variables let-exp)
         (let-body let-exp))
       (let-valuuess let-exp)))
-
-(define (eval-let let-exp env)
-  (my-eval (let->combination let-exp) env))
 
 (define (make-lambda parameters body)
   (cons 'lambda (cons parameters body)))
@@ -82,6 +82,33 @@
     let-pair-value
     (let-pairs let-exp)))
 
+(define (eval-let* let*-exp env)
+  (my-eval (let*->lets let*-exp) env))
+
+(define (let*->lets let*-exp)
+  (cond
+    ((let-exp-has-only-one-binding let*-exp)
+     (let->combination let*-exp))
+    (else
+      (make-let
+        (list (first-binding let*-exp))
+        (list (let*->lets (drop-first-binding let*-exp)))))))
+
+(define (let-exp-has-only-one-binding let-exp)
+  (= (length (let-variables let-exp)) 1))
+
+(define (make-let bindings body)
+  (cons 'let (cons bindings body)))
+
+(define (first-binding let-exp)
+  (caadr let-exp))
+
+(define (rest-bindings let-exp)
+  (cdadr let-exp))
+
+(define (drop-first-binding let-exp)
+  (make-let (rest-bindings let-exp) (let-body let-exp)))
+
 (define (eval-lambda exp env)
   (make-procedure
     (lambda-parameters exp)
@@ -103,7 +130,8 @@
 (define eval-table
   (hash
     'lambda eval-lambda
-    'let eval-let))
+    'let eval-let
+    'let* eval-let*))
 
 ;;;;;;;;;;; apply definition below ;;;;;;;;;;;;;;
 
@@ -152,12 +180,19 @@
    (my-eval '(let ((a 40) (b 2)) (+ a b)) the-global-environment))
 
 (assert-equals
-  "let statement"
+  "nested let statement"
    42
    (my-eval '(let ((a 40))
                (let ((b 2))
                  (+ a b)))
             the-global-environment))
 
+(assert-equals
+  "let* statement with only one variable"
+  15
+  (my-eval '(let* ((x 3)) (* x 5)) the-global-environment))
 
-
+(assert-equals
+  "let* statement with many variables"
+  39
+  (my-eval '(let* ((x 3) (y (+ x 2)) (z (+ x y 5))) (* x z)) the-global-environment))
