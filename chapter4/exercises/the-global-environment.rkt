@@ -27,8 +27,8 @@
     (define (scan vars vals)
       (cond ((null? vars)
              (env-loop (enclosing-environment env)))
-            ((eq? var (mcar vars))
-             (mcar vals))
+            ((eq? var (car vars))
+             (car vals))
             (else (scan (cdr vars) (cdr vals)))))
     (if (eq? env the-empty-environment)
         (error "Unbound variable" var)
@@ -52,8 +52,8 @@
 
 (define the-global-environment
   (extend-environment
-    (list '+ '*)
-    (list (list 'primitive +) (list 'primitive *))
+    (list '+ '* 'display)
+    (list (list 'primitive +) (list 'primitive *) (list 'primitive display))
     the-empty-environment))
 
 (provide define-variable!)

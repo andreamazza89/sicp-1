@@ -1,5 +1,3 @@
-#lang racket
-
 (load "little-test.rkt")
 (require "chapter4/exercises/the-global-environment.rkt")
 
@@ -9,6 +7,8 @@
   (cond ((self-evaluating? exp) exp)
         ((variable? exp) (lookup-variable-value exp env))
         ((definition? exp) (eval-definition exp env))
+        ((begin? exp)
+         (eval-sequence (begin-actions exp) env))
         ((compound-expression? exp)
          ((get-eval-for exp) exp env))
         ((application? exp)
@@ -27,6 +27,21 @@
 
 (define (definition? exp)
   (tagged-list? exp 'define))
+
+(define (eval-sequence exps env)
+  (cond ((last-exp? exps) (eval (first-exp exps) env))
+        (else (eval (first-exp exps) env)
+              (eval-sequence (rest-exps exps) env))))
+
+(define (make-begin seq) (cons 'begin seq))
+
+(define (begin? exp) (tagged-list? exp 'begin))
+
+(define (begin-actions exp) (cdr exp))
+
+(define (last-exp? seq) (null? (cdr seq)))
+(define (first-exp seq) (car seq))
+(define (rest-exps seq) (cdr seq))
 
 (define (compound-expression? exp)
   (hash-has-key? eval-table (car exp)))
@@ -65,46 +80,37 @@
       (make-lambda (cdadr exp)
                    (cddr exp))))
 
+(define (for->expressions for-exp)
+  (make-begin
+    (map
+      (substitute-item-in-body for-exp (for-binding for-exp))
+      (for-collection for-exp))))
+
+(define (for-body for-exp)
+  (cadddr for-exp))
+
+(define (for-collection for-exp)
+  (caddr for-exp))
+
+(define (for-binding for-exp)
+  (cadr for-exp))
+
+(define (substitute-item-in-body for-exp for-binding)
+  (lambda (item)
+    (map
+      (lambda (token) (if (eq? token for-binding) item token))
+      (for-body for-exp))))
+
 ;;;;;;;;;;;; table of evaluators below ;;;;;;;;;;
 
+(define (eval-for for-exp env)
+  (my-eval (for->expressions for-exp) env))
+
 (define (eval-let let-exp env)
-  (if (named-let? let-exp)
-    (my-eval (named-let->self-referencial-combination let-exp) env)
-    (my-eval (let->combination let-exp) env)))
-
-(define (named-let? let-exp)
-  (not (pair?
-         (cadr let-exp))))
-
-; grab the self-referred name
-; create a lambda for the let body
-; now it's the same as let->combination but with the added lambda passed in
-(define (named-let->self-referencial-combination let-exp)
-  (let
-    ((let-name (get-let-name let-exp))
-     (let-lambda (make-lambda
-                   (named-let-variables let-exp)
-                   (named-let-body let-exp))))
-    (cons
-      (make-lambda
-        (append (named-let-variables let-exp) (list let-name))
-        (named-let-body let-exp))
-      (append (named-let-values let-exp) (list let-lambda)))))
+  (my-eval (let->combination let-exp) env))
 
 (define (get-let-name let-exp)
   (cadr let-exp))
-
-(define (named-let-variables let-exp)
-  (let-variables (named-let->let let-exp)))
-
-(define (named-let-values let-exp)
-  (let-valuuess (named-let->let let-exp)))
-
-(define (named-let-body let-exp)
-  (let-body (named-let->let let-exp)))
-
-(define (named-let->let let-exp)
-  (append (drop-right let-exp 3) (take-right let-exp 2)))
 
 (define (let->combination let-exp)
   (cons
@@ -190,7 +196,8 @@
   (hash
     'lambda eval-lambda
     'let eval-let
-    'let* eval-let*))
+    'let* eval-let*
+    'for eval-for))
 
 ;;;;;;;;;;; apply definition below ;;;;;;;;;;;;;;
 
@@ -232,19 +239,11 @@
       false))
 
 ;;;;;;;;;;; tests below ;;;;;;;;;;;;;;;;;;;;;;;;;
-
-; about to test this using side effects. feel a bit sick
-; adding fib to the global environment, so that we can then test that fib is there
-
-(my-eval '(define (fib n)
-           (let fib-iter ((a 1)
-                          (b 0)
-                          (count n))
-             (if (= count 0)
-               b
-               (fib-iter (+ a b) a (- count 1))))) the-global-environment)
+; (for [binding-name] [list-of-items] (display [binding-name]))
 
 (assert-equals
-  "named let"
-   13
-   (my-eval '(fib 7) the-global-environment))
+  "testing test"
+  '(begin (+ 3 1) (+ 3 2))
+  (for->expressions '(for item (1 2) (+ 3 item))))
+
+(my-eval '(for my-item ("just" "\n" "checking") (display my-item)) the-global-environment)
