@@ -1,3 +1,4 @@
+(load "little-test.rkt")
 (require compatibility/mlist)
 
 (define (extend-environment vars vals base-env)
@@ -69,5 +70,32 @@
     (mlist (mlist 'primitive +) (mlist 'primitive *) (mlist 'primitive display))
     the-empty-environment))
 
-(provide lookup-variable-value)
-(provide the-global-environment)
+(define test1-env the-global-environment)
+(define-variable! 'test-var 42 test1-env)
+(assert-equals
+  "defines a variable that does not exist"
+  42
+  (lookup-variable-value 'test-var test1-env))
+
+(define-variable! 'test-var 33 test1-env)
+(assert-equals
+  "defines a variable that already exists"
+  33
+  (lookup-variable-value 'test-var test1-env))
+
+(set-variable-value! 'test-var 66 test1-env)
+(assert-equals
+  "sets a variable in the nearest frame"
+  66
+  (lookup-variable-value 'test-var test1-env))
+
+(define test2-env
+  (extend-environment
+    (mlist 'test2-var)
+    (mlist 'hello)
+    test1-env))
+(set-variable-value! 'test-var 'can-you-hear-me test2-env)
+(assert-equals
+  "sets a variable one frame down"
+  'can-you-hear-me
+  (lookup-variable-value 'test-var test2-env))
