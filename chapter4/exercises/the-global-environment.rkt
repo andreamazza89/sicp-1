@@ -1,3 +1,5 @@
+#lang racket
+
 (require compatibility/mlist)
 
 (define (extend-environment vars vals base-env)
@@ -65,8 +67,12 @@
 
 (define the-global-environment
   (extend-environment
-    (mlist '+ '* 'display)
-    (mlist (mlist 'primitive +) (mlist 'primitive *) (mlist 'primitive display))
+    (mlist '+ '* 'display 'list 'map)
+    (mlist (mlist 'primitive +)
+           (mlist 'primitive *)
+           (mlist 'primitive display)
+           (mlist 'primitive list)
+           (mlist 'primitive map))
     the-empty-environment))
 
 (provide lookup-variable-value)

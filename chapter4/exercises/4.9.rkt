@@ -224,7 +224,7 @@
 
 (define apply-in-underlying-scheme apply)
 
-(define (primitive-implementation proc) (cadr proc))
+(define (primitive-implementation proc) (mcar (mcdr proc)))
 
 (define (compound-procedure? p)
   (tagged-list? p 'procedure))
@@ -234,9 +234,13 @@
 (define (procedure-environment p) (cadddr p))
 
 (define (tagged-list? exp tag)
-  (if (pair? exp)
-      (eq? (car exp) tag)
-      false))
+  (cond
+    ((pair? exp)
+      (eq? (car exp) tag))
+    ((mpair? exp)
+      (eq? (mcar exp) tag))
+    (else
+      false)))
 
 ;;;;;;;;;;; tests below ;;;;;;;;;;;;;;;;;;;;;;;;;
 ; (for [binding-name] [list-of-items] (display [binding-name]))
